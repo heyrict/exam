@@ -1,9 +1,8 @@
 import re, pickle, random, os
 import pandas as pd, numpy as np
 from datetime import datetime
-from data_processing import split_wrd, InteractiveAnswer
+from data_processing import split_wrd, InteractiveAnswer, space_fill
 from dateutil.relativedelta import relativedelta
-from txtform import _space_fill
 
 BOARDER_LENGTH = 40
 
@@ -77,13 +76,14 @@ class QuestFormExcelLoader(QuestFormTextLoader):
 
 
 class BeginQuestForm():
-    def __init__(self,qf,arrange='qast',no_score=False):
+    def __init__(self,qf,arrange='qast',no_score=False,input_manner=None):
         self.qf = self.selchap(qf)
         self.starttime = datetime.now()
         self.correct = self.wrong = 0
         self.length = len(self.qf)
         self.arrange = arrange
         self.no_score = no_score
+        self.input_manner = input_manner
         self.arranged_index = list(range(self.length))
 
     def selchap(self,qf):
@@ -93,15 +93,15 @@ class BeginQuestForm():
         if InteractiveAnswer('Randomize?',yes_or_no=True).get():
             random.shuffle(self.arranged_index)
         print('\n','='*BOARDER_LENGTH,'\n')
-        print(_space_fill(self.starttime.strftime('%Y-%m-%d %H:%M:%S'),BOARDER_LENGTH))
-        print(_space_fill('Find %d questions.'%(self.length),BOARDER_LENGTH))
-        print(_space_fill('start test.',BOARDER_LENGTH))
+        print(space_fill(self.starttime.strftime('%Y-%m-%d %H:%M:%S'),BOARDER_LENGTH))
+        print(space_fill('Find %d questions.'%(self.length),BOARDER_LENGTH))
+        print(space_fill('start test.',BOARDER_LENGTH))
         print('\n','='*BOARDER_LENGTH,'\n')
 
     def _report(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
         usedtime = relativedelta(datetime.now(),self.starttime)
-        print(_space_fill('Total Time: %d hours, %d minutes, %d seconds'%(usedtime.hours,\
+        print(space_fill('Total Time: %d hours, %d minutes, %d seconds'%(usedtime.hours,\
                         usedtime.minutes,usedtime.seconds),BOARDER_LENGTH))
         if self.no_score: pass
         elif self.correct+self.wrong != 0:
@@ -113,7 +113,7 @@ class BeginQuestForm():
 
     def onkill(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
-        print(_space_fill('Interrupted',BOARDER_LENGTH))
+        print(space_fill('Interrupted',BOARDER_LENGTH))
         self._report()
         self.qf.index = range(len(self.qf))
         with open('Curdata.data','wb') as f:
@@ -122,9 +122,14 @@ class BeginQuestForm():
 
     def onfinish(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
-        print(_space_fill('Finished',BOARDER_LENGTH))
+        print(space_fill('Finished',BOARDER_LENGTH))
         self._report()
-        os.remove('Curdata.data')
+        if len(self.qf) == 0:
+            os.remove('Curdata.data')
+        else:
+            self.qf.index = range(len(self.qf))
+            with open('Curdata.data','wb') as f:
+                pickle.dump(self.qf,f)
         return
 
     def raise_quest(self,quest):
@@ -139,11 +144,19 @@ class BeginQuestForm():
             elif re.findall('^'+a,'selection'):
                 self.raise_sel(quest)
             elif re.findall('^'+a,'true_answer'):
-                ans = input('Your Answer: ')
+                ans = self.get_input(self.input_manner)
                 ans = self.check_ans(ans,quest)
-                if not ans: self.raise_ta(quest)
+                if not ans or self.no_score: self.raise_ta(quest)
         print('\n','-'*BOARDER_LENGTH,'\n')
         return ans
+
+    def get_input(self,input_manner=None):
+        if type(input_manner) == None:
+            return input('Your Answer: ')
+        else:
+            try: return input_manner.get()
+            except AttributeError:
+                raise TypeError('`input_manner` should have a `get()` method')
         
     def start(self):
         self.oninit()
@@ -170,6 +183,7 @@ class BeginQuestForm():
         if quest.ta: print('True Answer:',' '.join(quest.ta))
 
     def check_ans(self,ans,quest):
+        if self.no_score: return True
         if ans == ''.join(quest.ta):
             print('Correct!')
             return True
