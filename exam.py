@@ -151,7 +151,7 @@ class BeginQuestForm():
         return ans
 
     def get_input(self,input_manner=None):
-        if type(input_manner) == None:
+        if not input_manner:
             return input('Your Answer: ')
         else:
             try: return input_manner.get()
@@ -185,8 +185,8 @@ class BeginQuestForm():
     def check_ans(self,ans,quest):
         if self.no_score: return True
         if ans == ''.join(quest.ta):
-            print('Correct!')
+            print('\033[1;31mCorrect!\033[0m')
             return True
         else:
-            print('WRONG!')
+            print('\033[1;32mWRONG!\033[0m')
             return False
