@@ -1,5 +1,5 @@
 import re, pickle, random, os
-import pandas as pd, numpy as np
+import pandas as pd
 from datetime import datetime
 from data_processing import split_wrd, InteractiveAnswer, space_fill
 from dateutil.relativedelta import relativedelta
@@ -51,7 +51,11 @@ class QuestFormTextLoader():
         qf = self.get_cached_qf()
         if type(qf) != type(None): return qf
 
-        return self._load(queststr)
+        if 'MainData.data' in os.listdir():
+            with open('MainData.data','rb') as f: qs = pickle.load(f)
+        else:
+            qs = self._load(queststr)
+            with open('MainData.data','wb') as f: pickle.dump(qs, f)
 
 
 class QuestFormExcelLoader(QuestFormTextLoader):
@@ -59,6 +63,7 @@ class QuestFormExcelLoader(QuestFormTextLoader):
         super(QuestFormExcelLoader,self).__init__(None,qcol,selcol,tacol,argcol)
 
     def _load(self,questdf):
+        if type(questdf) == str: questdf = pd.read_excel(questdf)
         questform = QuestForm()
         for q in range(len(questdf)):
             quest = questdf.ix[q]

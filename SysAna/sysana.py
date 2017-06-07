@@ -80,10 +80,10 @@ class BeginQuestFormSysAna(BeginQuestForm):
 
 
 def main():
-    df = pd.read_excel('./Data.xlsx')
-    t=QuestFormExcelLoader(qcol='question',selcol=['option_'+i for i in 'abcde'],\
-            tacol='question_answer', argcol={'Difficulty':'question_difclt','Chapter':'question_num'}).load(df)
+    t=QuestFormExcelLoader(qcol='question',selcol=['option_'+i for i in 'abcde'],
+            tacol='question_answer', argcol={'Difficulty':'question_difclt','Chapter':'question_num'}).load('Data.xlsx')
     BeginQuestFormSysAna(t).start()
+
 
 if __name__ == '__main__':
     main()
