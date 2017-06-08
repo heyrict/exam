@@ -1,0 +1,1 @@
+/home/ericx/Eric/benkyo/系解重点42个名解.md

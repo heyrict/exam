@@ -1,0 +1,1 @@
+/home/ericx/Eric/benkyo/系解简答必背整理2.0版.md

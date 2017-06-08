@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+sys.path.insert(0, '..')
+
 from exam import *
 from data_processing import split_wrd, _in_list, unsqueeze_numlist, colorit
 import pandas as pd
