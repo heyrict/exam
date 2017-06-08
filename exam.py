@@ -29,6 +29,7 @@ class QuestFormTextLoader():
         self.selpattern = selpattern
         self.tapattern = tapattern
         self.argpattern = dict(argpattern)
+        self.is_cached = False
 
     def get_cached_qf(self):
         if 'Curdata.data' in os.listdir():
@@ -49,13 +50,17 @@ class QuestFormTextLoader():
 
     def load(self,queststr):
         qf = self.get_cached_qf()
-        if type(qf) != type(None): return qf
+        if type(qf) != type(None): 
+            self.is_cached = True
+            return qf
 
         if 'MainData.data' in os.listdir():
-            with open('MainData.data','rb') as f: qs = pickle.load(f)
+            with open('MainData.data','rb') as f: qf = pickle.load(f)
         else:
-            qs = self._load(queststr)
-            with open('MainData.data','wb') as f: pickle.dump(qs, f)
+            qf = self._load(queststr)
+            with open('MainData.data','wb') as f: pickle.dump(qf, f)
+
+        return qf
 
 
 class QuestFormExcelLoader(QuestFormTextLoader):
@@ -81,8 +86,10 @@ class QuestFormExcelLoader(QuestFormTextLoader):
 
 
 class BeginQuestForm():
-    def __init__(self,qf,arrange='qast',no_score=False,input_manner=None):
-        self.qf = self.selchap(qf)
+    def __init__(self,qf,arrange='qast',no_score=False,input_manner=None,no_filter=False):
+        if not no_filter: 
+            self.qf = self.selchap(qf)
+        else: self.qf = qf
         self.starttime = datetime.now()
         self.correct = self.wrong = 0
         self.length = len(self.qf)
@@ -177,7 +184,7 @@ class BeginQuestForm():
             self.onkill()
 
     def raise_q(self,quest):
-        print('Question %d/%d: '%(self.correct+self.wrong+1,self.length),end='')
+        print('Question %d/%d: '%(self.correct+self.wrong+1,self.length+1),end='')
         print('\n'.join(quest.q))
         return
 

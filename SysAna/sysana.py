@@ -27,37 +27,29 @@ CHAP = 'Which chapter to choose(empty to enter search mode)\n'\
 
 class BeginQuestFormSysAna(BeginQuestForm):
     def selchap(self,qf):
-        outqf = QuestForm()
-
         # chapter
         kind = InteractiveAnswer(CHAP+':',accept_empty=True,
                 serializer=lambda x: [int(i) for i in split_wrd(x,list(', ，、'))],
                 verify=unsqueeze_numlist('0-13,16-19')).get()
 
         if kind:
-            outqf = outqf.append(QuestForm([i for i in qf if _in_list(i.args['Chapter'],kind)]))
-            qf = outqf
-            outqf = QuestForm()
+            qf = QuestForm([i for i in qf if _in_list(i.args['Chapter'],kind)])
         else:
             # include
             kind = InteractiveAnswer('Which chapter to include?(empty to include all): ',accept_empty=True,
                     serializer=lambda x:split_wrd(x,list(', ，、'))).get()
             if kind:
-                outqf = outqf.append(QuestForm([i for i in qf if _in_list(','.join(i.q+i.sel),kind)]))
-                qf = outqf
-                outqf = QuestForm()
+                qf = QuestForm([i for i in qf if _in_list(','.join(i.q+i.sel),kind)])
             # exclude
             kind = InteractiveAnswer('Which chapter to exclude?(empty to skip): ',accept_empty=True,
                     serializer=lambda x:split_wrd(x,list(', ，、'))).get()
             if kind:
-                outqf = outqf.append(QuestForm([i for i in qf if not _in_list(','.join(i.q+i.sel),kind)]))
-                qf = outqf
-                outqf = QuestForm()
+                qf = QuestForm([i for i in qf if not _in_list(','.join(i.q+i.sel),kind)])
         # difficulties
         kind = InteractiveAnswer('Which difficulty(ies) to choose? ',\
                 serializer=lambda x:sum([list(i) for i in split_wrd(x,list(', ，、'),ignore_space=True)],[]),\
                 verify='1234').get()
-        outqf = outqf.append(QuestForm([i for i in qf if _in_list(i.args['Difficulty'],kind)]))
+        outqf = QuestForm([i for i in qf if _in_list(i.args['Difficulty'],kind)])
         return outqf
 
     def raise_sel(self,quest):
@@ -81,8 +73,8 @@ class BeginQuestFormSysAna(BeginQuestForm):
 
 def main():
     t=QuestFormExcelLoader(qcol='question',selcol=['option_'+i for i in 'abcde'],
-            tacol='question_answer', argcol={'Difficulty':'question_difclt','Chapter':'question_num'}).load('Data.xlsx')
-    BeginQuestFormSysAna(t).start()
+            tacol='question_answer', argcol={'Difficulty':'question_difclt','Chapter':'question_num'})
+    BeginQuestFormSysAna(t.load('Data.xlsx'),no_filter=t.is_cached).start()
 
 
 if __name__ == '__main__':
