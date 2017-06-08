@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from exam import *
-from data_processing import split_wrd, _in_list, unsqueeze_numlist
+from data_processing import split_wrd, _in_list, unsqueeze_numlist, colorit
 import pandas as pd
 
 CHAP = 'Which chapter to choose(empty to enter search mode)\n'\
@@ -64,10 +64,10 @@ class BeginQuestFormSysAna(BeginQuestForm):
 
     def check_ans(self,ans,quest):
         if set(list(split_wrd(ans.upper(),list(', ，、'),''))) == set(list(''.join(quest.ta))):
-            print('\033[1;32mCorrect!\033[0m')
+            print(colorit('Correct!','green'))
             return True
         else:
-            print('\033[1;31mWRONG!\033[0m')
+            print(colorit('WRONG!','red'))
             return False
 
 

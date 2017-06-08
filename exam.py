@@ -1,7 +1,7 @@
 import re, pickle, random, os
 import pandas as pd
 from datetime import datetime
-from data_processing import split_wrd, InteractiveAnswer, space_fill
+from data_processing import split_wrd, InteractiveAnswer, space_fill, colorit
 from dateutil.relativedelta import relativedelta
 
 BOARDER_LENGTH = 40
@@ -97,6 +97,7 @@ class BeginQuestForm():
         self.no_score = no_score
         self.input_manner = input_manner
         self.arranged_index = list(range(self.length))
+        self.status = []
 
     def selchap(self,qf):
         return qf
@@ -113,13 +114,16 @@ class BeginQuestForm():
     def _report(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
         usedtime = relativedelta(datetime.now(),self.starttime)
-        print(space_fill('Total Time: %d hours, %d minutes, %d seconds'%(usedtime.hours,\
-                        usedtime.minutes,usedtime.seconds),BOARDER_LENGTH))
+        print(space_fill('Total Time: %d hours, %d minutes, %d seconds'\
+                %(usedtime.hours,usedtime.minutes,usedtime.seconds)\
+                ,BOARDER_LENGTH))
         if self.no_score: pass
         elif self.correct+self.wrong != 0:
             print('Correct: ',self.correct)
             print('Wrong: ',self.wrong)
             print('Score: %.2f'%(self.correct/(self.correct+self.wrong)*100))
+            print('\n','-'*BOARDER_LENGTH,'\n')
+            self.show_status(usedtime.hours)
         print('\n','='*BOARDER_LENGTH,'\n')
 
 
@@ -137,7 +141,7 @@ class BeginQuestForm():
         print(space_fill('Finished',BOARDER_LENGTH))
         self._report()
         if len(self.qf) == 0:
-            os.remove('Curdata.data')
+            if 'Curdata.data' in os.listdir(): os.remove('Curdata.data')
         else:
             self.qf.index = range(len(self.qf))
             with open('Curdata.data','wb') as f:
@@ -174,11 +178,14 @@ class BeginQuestForm():
         self.oninit()
         try:
             for quest in self.arranged_index:
+                head = datetime.now()
                 if self.raise_quest(self.qf[quest]):
                     self.correct += 1
                     self.qf = self.qf.drop(quest)
+                    self.status.append((relativedelta(datetime.now(),head).seconds, 1))
                 else:
                     self.wrong += 1
+                    self.status.append((relativedelta(datetime.now(),head).seconds, 0))
             self.onfinish()
         except KeyboardInterrupt:
             self.onkill()
@@ -202,3 +209,28 @@ class BeginQuestForm():
         else:
             print('\033[1;32mWRONG!\033[0m')
             return False
+
+    def show_status(self,hduration):
+        result = []
+        tempres = [0,0]
+        status = self.status
+        if hduration == 0:
+            inteval = 2 * 60
+        if hduration > 0:
+            inteval = 5 * hduration * 60
+
+        cursec = 0
+        for i in status:
+            while i[0]+cursec >= inteval:
+                result.append(tempres)
+                tempres = [0,0]
+                cursec = i[0] + cursec - 60
+            cursec += i[0]
+            tempres[i[1]] += 1
+        result.append(tempres)
+
+        total = inteval
+        for i in result:
+            print('%dm: '%(total/60),colorit('+'*i[1],'green')+colorit('-'*i[0],'red'))
+            total += inteval
+        return result
