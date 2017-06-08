@@ -187,8 +187,7 @@ class BeginQuestForm():
                     self.wrong += 1
                     self.status.append((relativedelta(datetime.now(),head).seconds, 0))
             self.onfinish()
-        except KeyboardInterrupt:
-            self.onkill()
+        except (KeyboardInterrupt, EOFError): self.onkill()
 
     def raise_q(self,quest):
         print('Question %d/%d: '%(self.correct+self.wrong+1,self.length+1),end='')
