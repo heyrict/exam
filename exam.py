@@ -1,7 +1,7 @@
 import re, pickle, random, os
 import pandas as pd
 from datetime import datetime
-from data_processing import split_wrd, InteractiveAnswer, space_fill, colorit
+from data_processing import split_wrd, InteractiveAnswer, space_fill, colorit, _in_list
 from dateutil.relativedelta import relativedelta
 
 BOARDER_LENGTH = 40
@@ -31,10 +31,10 @@ class QuestFormTextLoader():
         self.argpattern = dict(argpattern)
         self.is_cached = False
 
-    def get_cached_qf(self):
-        if 'Curdata.data' in os.listdir():
+    def get_cached_qf(self,togo='Curdata.data'):
+        if togo in os.listdir():
             if InteractiveAnswer('Cached data found.Continue?',yes_or_no=True).get():
-                with open('Curdata.data','rb') as f: return pickle.load(f)
+                with open(togo,'rb') as f: return pickle.load(f)
         return
                 
     def _load(self,queststr):
@@ -86,15 +86,15 @@ class QuestFormExcelLoader(QuestFormTextLoader):
 
 
 class BeginQuestForm():
-    def __init__(self,qf,arrange='qast',no_score=False,input_manner=None,no_filter=False):
+    def __init__(self,qf,arrange='qast',storage='l|w',no_score=False,input_manner=None,no_filter=False):
         self.qf = qf
         self.starttime = datetime.now()
-        self.correct = self.wrong = 0
-        self.length = len(self.qf)
+        self.correct = []
+        self.wrong = []
         self.arrange = arrange
+        self.storage = storage
         self.no_score = no_score
         self.input_manner = input_manner
-        self.arranged_index = list(range(self.length))
         self.status = []
         self.no_filter = no_filter
 
@@ -117,10 +117,12 @@ class BeginQuestForm():
                 %(usedtime.hours,usedtime.minutes,usedtime.seconds)\
                 ,BOARDER_LENGTH))
         if self.no_score: pass
-        elif self.correct+self.wrong != 0:
-            print('Correct: ',self.correct)
-            print('Wrong: ',self.wrong)
-            print('Score: %.2f'%(self.correct/(self.correct+self.wrong)*100))
+        elif len(self.correct)+len(self.wrong) != 0:
+            c = len(self.correct)
+            w = len(self.wrong)
+            print('Correct: ',c)
+            print('Wrong: ',w)
+            print('Score: %.2f'%(c/(c+w)*100))
             print('\n','-'*BOARDER_LENGTH,'\n')
             self.show_status(usedtime.hours)
         print('\n','='*BOARDER_LENGTH,'\n')
@@ -131,23 +133,48 @@ class BeginQuestForm():
         print(space_fill('Interrupted',BOARDER_LENGTH))
         self._report()
         self.qf.index = range(len(self.qf))
-        self.store_data()
+        self.store_data(level=self.storage)
         return
 
     def onfinish(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
         print(space_fill('Finished',BOARDER_LENGTH))
         self._report()
-        self.store_data()
+        self.store_data(level=self.storage)
         return
 
-    def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='t|w'):
-        if len(self.qf) == 0:
-            if togo in os.listdir(): os.remove(togo)
-        else:
-            self.qf.index = range(len(self.qf))
+    def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='l|w'):
+        l = [i for i in self.qf.index if not (_in_list(i,self.correct) | _in_list(i,self.wrong))]
+
+        togoindex = []
+        for i,j in zip('cwl',[self.correct,self.wrong,l]):
+            if i in level.split('|')[0]: togoindex += j
+        qf = self.qf[togoindex]
+        qf.index = range(len(qf))
+        if len(qf) != 0:
             with open(togo,'wb') as f:
-                pickle.dump(self.qf,f)
+                pickle.dump(qf,f)
+        else:
+            try: os.remove(togo)
+            except: pass
+        
+        if len(level.split('|')) > 1:
+            toreviseindex = []
+            for i,j in zip('cwl',[self.correct,self.wrong,l]):
+                if i in level.split('|')[1]: toreviseindex += j
+            qf = self.qf[toreviseindex]
+            if len(qf) != 0:
+                if torevise not in os.listdir():
+                    with open(torevise,'wb') as f:
+                        qf.index = range(len(qf))
+                        pickle.dump(qf,f)
+                else:
+                    with open(torevise,'rb') as f:
+                        wrongdata = pickle.load(f)
+                    with open(torevise,'wb') as f:
+                        wrongdata = wrongdata.append(qf)
+                        wrongdata.index = range(len(wrongdata))
+                        pickle.dump(wrongdata,f)
         return
 
     def raise_quest(self,quest):
@@ -178,22 +205,23 @@ class BeginQuestForm():
         
     def start(self):
         try:
-            if not self.no_filter: self.qf = self.selchap(qf)
+            if not self.no_filter: self.qf = self.selchap(self.qf)
+            self.length = len(self.qf)
+            self.arranged_index = list(range(self.length))
             self.oninit()
             for quest in self.arranged_index:
                 head = datetime.now()
                 if self.raise_quest(self.qf[quest]):
-                    self.correct += 1
-                    self.qf = self.qf.drop(quest)
+                    self.correct.append(quest)
                     self.status.append((relativedelta(datetime.now(),head).seconds, 1))
                 else:
-                    self.wrong += 1
+                    self.wrong.append(quest)
                     self.status.append((relativedelta(datetime.now(),head).seconds, 0))
             self.onfinish()
         except (KeyboardInterrupt, EOFError): self.onkill()
 
     def raise_q(self,quest):
-        print('Question %d/%d: '%(self.correct+self.wrong+1,self.length+1),end='')
+        print('Question %d/%d: '%(len(self.correct)+len(self.wrong)+1,self.length),end='')
         print('\n'.join(quest.q))
         return
 
@@ -206,10 +234,10 @@ class BeginQuestForm():
     def check_ans(self,ans,quest):
         if self.no_score: return True
         if ans == ''.join(quest.ta):
-            print('\033[1;31mCorrect!\033[0m')
+            print(colorit('Correct!','green'))
             return True
         else:
-            print('\033[1;32mWRONG!\033[0m')
+            print(colorit('WRONG!','red'))
             return False
 
     def show_status(self,hduration):
