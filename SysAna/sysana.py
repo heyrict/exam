@@ -73,6 +73,31 @@ class BeginQuestFormSysAna(BeginQuestForm):
             print(colorit('WRONG!','red'))
             return False
 
+    def onkill(self):
+        print('\n\n','='*BOARDER_LENGTH,'\n')
+        print(space_fill('Interrupted',BOARDER_LENGTH))
+        self._report()
+        self.qf.index = range(len(self.qf))
+
+        with open('Curdata.data','wb') as f:
+            qf = self.qf[self.wrong:].copy()
+            qf.index = range(len(qf))
+            pickle.dump(qf,f)
+
+        if self.wrong > 0:
+            if 'Wrongdata.data' not in os.listdir():
+                with open('Wrongdata.data','wb') as f:
+                    qf = self.qf[:self.wrong].copy()
+                    qf.index = range(len(qf))
+                    pickle.dump(self.qf[:self.wrong],f)
+            else:
+                with open('Wrongdata.data','rb') as f:
+                    wrongdata = pickle.load(f)
+                with open('Wrongdata.data','wb') as f:
+                    wrongdata = wrongdata.append(self.qf[:self.wrong])
+                    pickle.dump(wrongdata,f)
+        return
+
 
 def main():
     t=QuestFormExcelLoader(qcol='question',selcol=['option_'+i for i in 'abcde'],
