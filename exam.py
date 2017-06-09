@@ -223,7 +223,7 @@ class BeginQuestForm():
             while i[0]+cursec >= inteval:
                 result.append(tempres)
                 tempres = [0,0]
-                cursec = i[0] + cursec - 60
+                cursec = i[0] + cursec - inteval
             cursec += i[0]
             tempres[i[1]] += 1
         result.append(tempres)
