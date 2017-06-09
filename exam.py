@@ -87,9 +87,7 @@ class QuestFormExcelLoader(QuestFormTextLoader):
 
 class BeginQuestForm():
     def __init__(self,qf,arrange='qast',no_score=False,input_manner=None,no_filter=False):
-        if not no_filter: 
-            self.qf = self.selchap(qf)
-        else: self.qf = qf
+        self.qf = qf
         self.starttime = datetime.now()
         self.correct = self.wrong = 0
         self.length = len(self.qf)
@@ -98,6 +96,7 @@ class BeginQuestForm():
         self.input_manner = input_manner
         self.arranged_index = list(range(self.length))
         self.status = []
+        self.no_filter = no_filter
 
     def selchap(self,qf):
         return qf
@@ -132,19 +131,22 @@ class BeginQuestForm():
         print(space_fill('Interrupted',BOARDER_LENGTH))
         self._report()
         self.qf.index = range(len(self.qf))
-        with open('Curdata.data','wb') as f:
-            pickle.dump(self.qf,f)
+        self.store_data()
         return
 
     def onfinish(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
         print(space_fill('Finished',BOARDER_LENGTH))
         self._report()
+        self.store_data()
+        return
+
+    def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='t|w'):
         if len(self.qf) == 0:
-            if 'Curdata.data' in os.listdir(): os.remove('Curdata.data')
+            if togo in os.listdir(): os.remove(togo)
         else:
             self.qf.index = range(len(self.qf))
-            with open('Curdata.data','wb') as f:
+            with open(togo,'wb') as f:
                 pickle.dump(self.qf,f)
         return
 
@@ -175,8 +177,9 @@ class BeginQuestForm():
                 raise TypeError('`input_manner` should have a `get()` method')
         
     def start(self):
-        self.oninit()
         try:
+            if not self.no_filter: self.qf = self.selchap(qf)
+            self.oninit()
             for quest in self.arranged_index:
                 head = datetime.now()
                 if self.raise_quest(self.qf[quest]):
