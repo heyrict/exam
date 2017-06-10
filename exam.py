@@ -192,6 +192,10 @@ class BeginQuestForm():
                 ans = self.get_input(self.input_manner)
                 ans = self.check_ans(ans,quest)
                 if not ans or self.no_score: self.raise_ta(quest)
+            else:
+                for k in quest.args:
+                    if re.findall('^'+a, k):
+                        print(k+':',quest.args[k])
         print('\n','-'*BOARDER_LENGTH,'\n')
         return ans
 
@@ -210,13 +214,12 @@ class BeginQuestForm():
             self.arranged_index = list(range(self.length))
             self.oninit()
             for quest in self.arranged_index:
-                head = datetime.now()
                 if self.raise_quest(self.qf[quest]):
                     self.correct.append(quest)
-                    self.status.append((relativedelta(datetime.now(),head).seconds, 1))
+                    self.status.append(((datetime.now()-self.starttime).seconds, 1))
                 else:
                     self.wrong.append(quest)
-                    self.status.append((relativedelta(datetime.now(),head).seconds, 0))
+                    self.status.append(((datetime.now()-self.starttime).seconds, 0))
             self.onfinish()
         except (KeyboardInterrupt, EOFError): self.onkill()
 
@@ -245,22 +248,21 @@ class BeginQuestForm():
         tempres = [0,0]
         status = self.status
         if hduration == 0:
-            inteval = 2 * 60
+            inteval = 3 * 60
         if hduration > 0:
             inteval = 5 * hduration * 60
 
-        cursec = 0
+        cursec = inteval
         for i in status:
-            while i[0]+cursec >= inteval:
+            while cursec - i[0] <= 0:
                 result.append(tempres)
                 tempres = [0,0]
-                cursec = i[0] + cursec - inteval
-            cursec += i[0]
+                cursec += inteval
             tempres[i[1]] += 1
         result.append(tempres)
 
         total = inteval
         for i in result:
-            print('%dm: '%(total/60),colorit('+'*i[1],'green')+colorit('-'*i[0],'red'))
+            print('%3dm:'%(total/60),colorit('+'*i[1],'green')+colorit('-'*i[0],'red'))
             total += inteval
         return result
