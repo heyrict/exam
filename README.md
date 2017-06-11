@@ -8,6 +8,30 @@ Requirements
 - Python 3 
 - pandas (recommended)
 
+File Structure
+-------------
+
+```
+exam
+├── data_processing.py           custom module.
+├── exam.py                      custom module.
+├── English_words                a sample for testing sat6 words.
+│   ├── English_words.md
+│   ├── engmain.py
+│   └── processed_words.txt
+├── revise                       a sample for revising Histology and Embryology.
+│   └── revise.py                sample txt file not updated for all questions
+|                                are written in Chinese.
+├── LICENSE
+├── README.md
+├── SysAna                       a sample for revising Systemetical Analogy.
+│   ├── Data.xlsx                Some of the questions are in English.
+│   └── sysana.py
+└── v1_to_v2.py                  a simple script to convert .data files generated
+                                 by v1.* to datafiles that can be used in v2.*
+                                 programs.
+```
+
 Contents
 --------
 ### class Quest
@@ -26,7 +50,7 @@ This class will also try to load cached data if exists.
 This is a class similar to QuestFormTextLoader
 that loads a list of questions from an excel file rather than a text file.
 
-*YOU SHOULD MAKE SURE `PANDAS` IS INSTALLED IN YOUR PYTHON3*
+*YOU SHOULD MAKE SURE `PANDAS` IS INSTALLED BEFORE USING THIS CLASS*
 
 ### class BeginQuestForm
 This is a class that runs a questionnaire if method `start` is called.
@@ -64,3 +88,14 @@ Usage
 ### Advanced
 
 Please refer to the help documents.
+
+TO-DO list
+---------
+1. to improve the documentation files.
+2. to add a graphic user interface if I am free.
+3. to add a feature to automatically recognise the regular
+    expression patterns.
+
+Addition
+-------
+All pull requests and issues are welcome!
