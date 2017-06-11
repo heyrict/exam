@@ -1,7 +1,6 @@
 import re, pickle, random, os
 from datetime import datetime
 from data_processing import split_wrd, InteractiveAnswer, space_fill, colorit, _in_list
-from dateutil.relativedelta import relativedelta
 
 BOARDER_LENGTH = 40
 
@@ -120,10 +119,11 @@ class BeginQuestForm():
 
     def _report(self):
         print('\n\n','='*BOARDER_LENGTH,'\n')
-        usedtime = relativedelta(datetime.now(),self.starttime)
+        usedtime = (datetime.now()-self.starttime).seconds
+        (usedtime, s) = divmod(usedtime, 60)
+        (h, m) = divmod(usedtime, 60)
         print(space_fill('Total Time: %d hours, %d minutes, %d seconds'\
-                %(usedtime.hours,usedtime.minutes,usedtime.seconds)\
-                ,BOARDER_LENGTH))
+                %(h, m, s) ,BOARDER_LENGTH))
         if self.no_score: pass
         elif len(self.correct)+len(self.wrong) != 0:
             c = len(self.correct)
@@ -132,7 +132,7 @@ class BeginQuestForm():
             print('Wrong: ',w)
             print('Score: %.2f'%(c/(c+w)*100))
             print('\n','-'*BOARDER_LENGTH,'\n')
-            self.show_status(usedtime.hours)
+            self.show_status(h)
         print('\n','='*BOARDER_LENGTH,'\n')
 
 
