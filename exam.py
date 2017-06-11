@@ -1,5 +1,4 @@
 import re, pickle, random, os
-import pandas as pd
 from datetime import datetime
 from data_processing import split_wrd, InteractiveAnswer, space_fill, colorit, _in_list
 from dateutil.relativedelta import relativedelta
@@ -14,12 +13,20 @@ class Quest():
         self.args = args
 
 
-class QuestForm(pd.Series):
+class QuestForm(list):
     def __init__(self,*args,**kwargs):
         super(QuestForm,self).__init__(*args,**kwargs)
 
-    def append(self,to_append,*args,**kwargs):
-        return QuestForm(super(QuestForm,self).append(pd.Series(to_append),ignore_index=True,*args,**kwargs))
+    def __getitem__(self,ind):
+        if type(ind) == int:
+            return super(QuestForm,self).__getitem__(ind)
+        else:
+            returns = QuestForm()
+            for i in ind: returns.append(self[i])
+            return returns
+    def append(self,*args,**kwargs):
+        super(QuestForm,self).append(*args,**kwargs)
+        return self
 
 
 class QuestFormTextLoader():
@@ -68,6 +75,7 @@ class QuestFormExcelLoader(QuestFormTextLoader):
         super(QuestFormExcelLoader,self).__init__(None,qcol,selcol,tacol,argcol)
 
     def _load(self,questdf):
+        import pandas as pd
         if type(questdf) == str: questdf = pd.read_excel(questdf)
         questform = QuestForm()
         for q in range(len(questdf)):
@@ -132,7 +140,6 @@ class BeginQuestForm():
         print('\n\n','='*BOARDER_LENGTH,'\n')
         print(space_fill('Interrupted',BOARDER_LENGTH))
         self._report()
-        self.qf.index = range(len(self.qf))
         self.store_data(level=self.storage)
         return
 
@@ -144,14 +151,13 @@ class BeginQuestForm():
         return
 
     def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='l|w'):
-        l = [i for i in self.qf.index if not (_in_list(i,self.correct) | _in_list(i,self.wrong))]
+        l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong))]
 
         togoindex = []
         for i,j in zip('cwl',[self.correct,self.wrong,l]):
             if i in level.split('|')[0]: togoindex += j
         togoindex.sort()
         qf = self.qf[togoindex]
-        qf.index = range(len(qf))
         if len(qf) != 0:
             with open(togo,'wb') as f:
                 pickle.dump(qf,f)
@@ -168,14 +174,12 @@ class BeginQuestForm():
             if len(qf) != 0:
                 if torevise not in os.listdir():
                     with open(torevise,'wb') as f:
-                        qf.index = range(len(qf))
                         pickle.dump(qf,f)
                 else:
                     with open(torevise,'rb') as f:
                         wrongdata = pickle.load(f)
                     with open(torevise,'wb') as f:
                         wrongdata = wrongdata.append(qf)
-                        wrongdata.index = range(len(wrongdata))
                         pickle.dump(wrongdata,f)
         return
 
