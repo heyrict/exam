@@ -149,6 +149,7 @@ class BeginQuestForm():
         togoindex = []
         for i,j in zip('cwl',[self.correct,self.wrong,l]):
             if i in level.split('|')[0]: togoindex += j
+        togoindex.sort()
         qf = self.qf[togoindex]
         qf.index = range(len(qf))
         if len(qf) != 0:
@@ -162,6 +163,7 @@ class BeginQuestForm():
             toreviseindex = []
             for i,j in zip('cwl',[self.correct,self.wrong,l]):
                 if i in level.split('|')[1]: toreviseindex += j
+            toreviseindex.sort()
             qf = self.qf[toreviseindex]
             if len(qf) != 0:
                 if torevise not in os.listdir():
