@@ -66,6 +66,9 @@ class BeginQuestFormSysAna(BeginQuestForm):
         return
 
     def check_ans(self,ans,quest):
+        if ans == 'pass': 
+            print(colorit('Roger!','magenta'))
+            return 'pass'
         if set(list(split_wrd(ans.upper(),list(', ，、'),''))) == set(list(''.join(quest.ta))):
             print(colorit('Correct!','green'))
             return True
