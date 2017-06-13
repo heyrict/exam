@@ -11,6 +11,17 @@ class Quest():
         self.ta = ta
         self.args = args
 
+    def __eq__(self,value):
+        if type(value) != type(self): return False
+        for i in ['q','sel','ta','args']:
+            if self.__getattribute__(i) != value.__getattribute__(i):
+                return False
+        return True
+
+    def __hash__(self):
+        return (hash('\n'.join(self.q)) + hash('\n'.join(self.sel)) + \
+                hash('\n'.join(self.ta)) + hash('\n'.join(self.args))) % int(1e+16)
+
 
 class QuestForm(list):
     def __init__(self,*args,**kwargs):
@@ -19,10 +30,13 @@ class QuestForm(list):
     def __getitem__(self,ind):
         if type(ind) == int:
             return super(QuestForm,self).__getitem__(ind)
+        if type(ind) == slice:
+            return QuestForm(super(QuestForm,self).__getitem__(ind))
         else:
             returns = QuestForm()
             for i in ind: returns.append(self[i])
             return returns
+
     def append(self,*args,**kwargs):
         super(QuestForm,self).append(*args,**kwargs)
         return self
@@ -178,8 +192,8 @@ class BeginQuestForm():
                 else:
                     with open(torevise,'rb') as f:
                         wrongdata = pickle.load(f)
+                    wrongdata = wrongdata.append(qf)
                     with open(torevise,'wb') as f:
-                        wrongdata = wrongdata.append(qf)
                         pickle.dump(wrongdata,f)
         return
 
