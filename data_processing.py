@@ -25,7 +25,7 @@ def flip_dict(dict_to_flip):
     return dict([i[::-1] for i in dict_to_flip.items()])
 
 
-def split_wrd(string,sep,rep=None,ignore_space=False):
+def split_wrd(string,sep,rep=None,ignore_space=False,kind='split'):
     '''
     split a string with given condition
 
@@ -41,11 +41,16 @@ def split_wrd(string,sep,rep=None,ignore_space=False):
         - iterable : return a string with all sep[i] replaced by rep[i]
     ignore_space : bool
         - whether to call strip() at each element
+    kind : str
+        - `split` : call str.split() method
+        - `re` : call re.split() method
 
     See Also
     --------
     split_at
     '''
+    if kind not in ['split','re']: 
+        raise ValueError('kind passed should be `split` or `re`')
     if type(sep) == str:
         sep = [sep]
     if rep == None:
@@ -53,22 +58,25 @@ def split_wrd(string,sep,rep=None,ignore_space=False):
         for j in sep:
             ts = []
             for i in string:
-                ts += i.split(j)
+                if kind == 'split': ts += i.split(j)
+                elif kind == 're': ts += re.split(j,i)
             string = ts
         if ignore_space: return [i.strip() for i in string if i.strip()]
         else: return [i for i in string if i]
     else:
         if type(rep)==str:
             for i in sep:
-                string = rep.join(string.split(i))
+                if kind == 'split': string = rep.join(string.split(i))
+                elif kind == 're': string = rep.join(re.split(i,string))
             return string
         else:
             for i,j in zip(sep,rep):
-                string = j.join(string.split(i))
+                if kind == 'split': string = j.join(string.split(i))
+                elif kind == 're': string = j.join(re.split(i,string))
             return string
 
 
-def split_at(string,sep,ignore_space=False):
+def split_at(string,sep,ignore_space=False,kind='split'):
     '''
     split a string at given condition
 
@@ -80,18 +88,24 @@ def split_at(string,sep,ignore_space=False):
         for each item in sep, call string.split() method
     ignore_space : bool
         - whether to call strip() at each element
+    kind : str
+        - `split` : call str.split() method
+        - `re` : call re.split() method
 
     See Also
     --------
     split_wrd
     '''
+    if kind not in ['split','re']: 
+        raise ValueError('kind passed should be `split` or `re`')
     if type(sep) == str:
         sep = [sep]
     string = [string]
     for i in sep:
         ts = []
         for j in string:
-            ts += [s+i for s in j.split(i)]
+            if kind == 'split': ts += [s+i for s in j.split(i)]
+            elif kind == 're': ts += [s+i for s in re.split(i,j)]
             ts[-1] = ts[-1][:-1]
         if ignore_space: string = [s for s in ts if s.strip()]
         else: string = ts
@@ -343,6 +357,7 @@ def unsqueeze_numlist(numlist):
         else: out.append(list(range(int(i[0]),int(i[1])+1)))
     return sum(out,[])
 
+
 def colorit(string,color):
     colors = ['black','red','green','yellow','blue','magenta',\
             'cyan','white','gray','lightred','lightgreen','lightyellow',\
@@ -356,3 +371,43 @@ def colorit(string,color):
             raise ValueError(color,'is not a 256-color index')
     
     return '\033[38;5;%dm%s\033[0m'%(color,string)
+
+
+def auto_newline(string, thresh=78, combine=True, remove_spaces=False, auto_indent=True):
+    '''
+    autometically change the linebreaks.
+
+    PARAMETERS
+    ----------
+    string : str
+    thresh : int
+        max line broadth
+    combine : bool
+        whether to regard an exact `\n` as a linebreak or the end of a passage.
+    remove_spaces : bool
+        whether to remove spaces in the head and tail.
+    '''
+    if combine: 
+        string = re.sub(r' *([^\n]) *\n *([^\n]) *',r'\1 \2',string)
+    strls = split_at(string,'\n')
+    if remove_spaces: strls = [re.sub(r'^ *(.*) *(\n+)',r'\1\2',i) for i in strls]
+    if auto_indent: 
+        indents = [re.findall('^ +\(?\d*\.?\)?\+?-?\*?>? *',i) for i in strls]
+        indents = [len(i[0]) if len(i)>0 else 0 for i in indents]
+    else: indents = [0]*len(strls)
+    for l in range(len(strls)):
+        line = strls[l]
+        length = len(line)
+        if length < thresh: continue
+        preferred_sep = sorted(set(i.end()-1 for i in re.finditer(r'[;,. ]+[^\n]',line)))+[length]
+
+        th = thresh
+        prev = th
+        for s in preferred_sep:
+            if s > th:
+                strls[l] = strls[l][:prev-length]+'\n'+(not combine)*'\t'\
+                        +indents[l]*' '+strls[l][prev-length:]
+                th += thresh
+                prev = th
+            else: prev = s
+    return ''.join(strls)
