@@ -192,7 +192,7 @@ class BeginQuestForm():
                 else:
                     with open(torevise,'rb') as f:
                         wrongdata = pickle.load(f)
-                    wrongdata = wrongdata.append(qf)
+                    wrongdata = wrongdata + qf
                     with open(torevise,'wb') as f:
                         pickle.dump(wrongdata,f)
         return
