@@ -18,12 +18,12 @@ def main():
             continue
 
         isv2 = type(data) == exam.QuestForm
-        data = exam.QuestForm(data)
         if options.test: print(i.ljust(maxlen),':','v2' if isv2 else 'v1')
         else:
             if isv2:
                 print(i.ljust(maxlen),':','v2. Skipping...')
             else:
+                data = exam.QuestForm(data)
                 with open('v2.'.join(i.split('.')),'wb') as f: pickle.dump(data,f)
     return
 

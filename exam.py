@@ -64,7 +64,7 @@ class QuestFormTextLoader():
             selitem = re.findall(self.selpattern,quest) if self.selpattern else None
             taitem = re.findall(self.tapattern,quest) if self.tapattern else None
             argitem = [(patnam,re.findall(self.argpattern(patnam),quest)) \
-                    for patnam in self.argpattern] if self.argpattern else None
+                    for patnam in self.argpattern] if self.argpattern else {}
             questform = questform.append(Quest(q=qitem,sel=selitem,ta=taitem,args=argitem))
         return questform
 
@@ -192,7 +192,7 @@ class BeginQuestForm():
                 else:
                     with open(torevise,'rb') as f:
                         wrongdata = pickle.load(f)
-                    wrongdata = wrongdata + qf
+                    wrongdata = QuestForm(wrongdata + qf)
                     with open(torevise,'wb') as f:
                         pickle.dump(wrongdata,f)
         return
