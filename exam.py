@@ -112,6 +112,7 @@ class BeginQuestForm():
         self.starttime = datetime.now()
         self.correct = []
         self.wrong = []
+        self.other = []
         self.arrange = arrange
         self.storage = storage
         self.no_score = no_score
@@ -165,10 +166,10 @@ class BeginQuestForm():
         return
 
     def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='l|w'):
-        l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong))]
+        l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong) | _in_list(i,self.other))]
 
         togoindex = []
-        for i,j in zip('cwl',[self.correct,self.wrong,l]):
+        for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
             if i in level.split('|')[0]: togoindex += j
         togoindex.sort()
         qf = self.qf[togoindex]
@@ -181,7 +182,7 @@ class BeginQuestForm():
         
         if len(level.split('|')) > 1:
             toreviseindex = []
-            for i,j in zip('cwl',[self.correct,self.wrong,l]):
+            for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
                 if i in level.split('|')[1]: toreviseindex += j
             toreviseindex.sort()
             qf = self.qf[toreviseindex]
@@ -211,7 +212,7 @@ class BeginQuestForm():
             elif re.findall('^'+a,'true_answer'):
                 ans = self.get_input(self.input_manner)
                 ans = self.check_ans(ans,quest)
-                if not ans or self.no_score: self.raise_ta(quest)
+                if ans is not True or self.no_score: self.raise_ta(quest)
             else:
                 for k in quest.args:
                     if re.findall('^'+a, k):
@@ -234,17 +235,22 @@ class BeginQuestForm():
             self.arranged_index = list(range(self.length))
             self.oninit()
             for quest in self.arranged_index:
-                if self.raise_quest(self.qf[quest]):
+                tof = self.raise_quest(self.qf[quest])
+                if tof is True:
                     self.correct.append(quest)
                     self.status.append(((datetime.now()-self.starttime).seconds, 1))
-                else:
+                elif tof is False:
                     self.wrong.append(quest)
                     self.status.append(((datetime.now()-self.starttime).seconds, 0))
+                else:
+                    self.other.append(quest)
+                    self.status.append(((datetime.now()-self.starttime).seconds, 2))
             self.onfinish()
         except (KeyboardInterrupt, EOFError): self.onkill()
 
     def raise_q(self,quest):
-        print('Question %d/%d: '%(len(self.correct)+len(self.wrong)+1,self.length),end='')
+        print('Question %d/%d: '%(len(self.other)+len(self.correct)+
+                len(self.wrong)+1,self.length),end='')
         print('\n'.join(quest.q))
         return
 
@@ -265,7 +271,7 @@ class BeginQuestForm():
 
     def show_status(self,hduration):
         result = []
-        tempres = [0,0]
+        tempres = [0,0,0]
         status = self.status
         if hduration == 0:
             inteval = 3 * 60
@@ -276,7 +282,7 @@ class BeginQuestForm():
         for i in status:
             while cursec - i[0] <= 0:
                 result.append(tempres)
-                tempres = [0,0]
+                tempres = [0,0,0]
                 cursec += inteval
             tempres[i[1]] += 1
         result.append(tempres)

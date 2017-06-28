@@ -34,7 +34,7 @@ class BeginQuestFormEngMain(BeginQuestForm):
         return
 
     def raise_sel(self,quest):
-        if quest.sel: print('True Answer:',' '.join(quest.sel))
+        if quest.sel: print('True Answer:',*quest.sel,sep='\n')
 
 #def main():
 #    qf = QuestFormTextLoaderRevise(questpattern='\d+\.[\s\S]+?(?<=\n\n)',qpattern='(?=\d+\.).*',

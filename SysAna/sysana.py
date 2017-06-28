@@ -61,7 +61,7 @@ class BeginQuestFormSysAna(BeginQuestForm):
                 print(t+'.',s)
 
     def raise_q(self,quest):
-        print('Question %d/%d: '%(len(self.correct)+len(self.wrong)+1,self.length),end='')
+        print('Question %d/%d: '%(len(self.other)+len(self.correct)+len(self.wrong)+1,self.length),end='')
         print('\n'.join(quest.q),'' if len(quest.ta[0])==1 else '[多选]')
         return
 
