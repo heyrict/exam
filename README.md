@@ -5,7 +5,7 @@ A class to generate customized exam program.
 
 Requirements
 -----------
-- Python 3 
+- Python 3
 - pandas (recommended)
 
 File Structure
@@ -13,21 +13,24 @@ File Structure
 
 ```
 exam
-├── data_processing.py           custom module.
-├── exam.py                      custom module.
-├── English_words                a sample for testing sat6 words.
+├── data_processing.py           Custom module.
+├── exam.py                      Custom module.
+├── English_words                A sample for testing sat6 words.
 │   ├── English_words.md
 │   ├── engmain.py
 │   └── processed_words.txt
-├── revise                       a sample for revising Histology and Embryology.
-│   └── revise.py                sample txt file not updated for all questions
-|                                are written in Chinese.
+├── revise                       A sample for revising Histology and Embryology.
+│   └── revise.py                sample txt file not uploaded for all questions
+│                                are written in Chinese.
 ├── LICENSE
 ├── README.md
-├── SysAna                       a sample for revising Systemetical Analogy.
+├── SysAna                       A sample for revising Systemetical Analogy.
 │   ├── Data.xlsx                Some of the questions are in English.
 │   └── sysana.py
-└── v1_to_v2.py                  a simple script to convert .data files generated
+├── Physiology                   A sample for revising Physiology.
+│   ├── Data.xlsx                Not all question have answer.
+│   └── main.py
+└── v1_to_v2.py                  A simple script to convert .data files generated
                                  by v1.* to datafiles that can be used in v2.*
                                  programs.
 ```
@@ -41,7 +44,7 @@ This is a class that stores every Question.
 This is a class derived from class list that stores all `Quest`s
 
 ### class QuestFormTextLoader
-This is a class that loads a structured text file containing a 
+This is a class that loads a structured text file containing a
 list of questions by the regular expression provided.
 
 This class will also try to load cached data if exists.
@@ -78,7 +81,7 @@ Usage
     returned value in a variable, say **qf**.
 
     the `load` method of QuestFormTextLoader accepts a string that contains the whole data of your text file.
-    
+
     the `load` method of QuestFormExcelLoader accepts the name of you excel file
     or pandas.DataFrame object if you are capable of pandas module.
 

@@ -6,16 +6,30 @@ BOARDER_LENGTH = 40
 
 class Quest():
     def __init__(self,q,sel=None,ta=None,args={}):
+        '''
+        Class representing a Question.
+
+        Parameters
+        ----------
+        basic arguments:
+            q : question. necessary. list.
+            sel : selections. list.
+            ta : true answer. list.
+        extensable arguments:
+            args : dict with sets of {'name': 'value'}.
+        '''
         self.q = q
         self.sel = sel
         self.ta = ta
         self.args = args
 
     def __str__(self):
+        '''Visualize the `Quest`.'''
         return '{\n\tq: %s,\n\tsel: %s,\n\tta: %s,\n\targs: %s\n}' % \
             (self.q, self.sel, self.ta, self.args)
 
     def __eq__(self,value):
+        '''Evalue two `Quest`s as equal.'''
         if type(value) != type(self): return False
         for i in ['q','sel','ta','args']:
             if self.__getattribute__(i) != value.__getattribute__(i):
@@ -47,7 +61,19 @@ class QuestForm(list):
 
 
 class QuestFormTextLoader():
+    '''QuestForm Loader for text files.'''
+
     def __init__(self,questpattern,qpattern,selpattern=None,tapattern=None,argpattern={}):
+        '''
+        Parameters
+        ----------
+        questpattern : regex pattern for a question. necessary.
+        qpattern : regex pattern for question text in a question. necessary.
+        selpattern : regex pattern for selections.
+                     a question can have several matching selections.
+        tapattern : regex pattern for true answer.
+        argpattern : dict with {'arg_name' : 'arg_regex'} sets.
+        '''
         self.questpattern = questpattern
         self.qpattern = qpattern
         self.selpattern = selpattern
@@ -56,6 +82,7 @@ class QuestFormTextLoader():
         self.is_cached = False
 
     def get_cached_qf(self,togo='Curdata.data'):
+        '''Load cached QuestForm.'''
         if togo in os.listdir():
             if InteractiveAnswer('Cached data found.Continue?',yes_or_no=True).get():
                 with open(togo,'rb') as f: return pickle.load(f)
@@ -73,6 +100,7 @@ class QuestFormTextLoader():
         return questform
 
     def load(self,queststr):
+        '''Search queststr, match arguments and returns a QuestForm.'''
         qf = self.get_cached_qf()
         if type(qf) != type(None):
             self.is_cached = True
@@ -88,7 +116,19 @@ class QuestFormTextLoader():
 
 
 class QuestFormExcelLoader(QuestFormTextLoader):
+    '''QuestForm Loader for excel files. Requires `pandas` module.'''
+
     def __init__(self,qcol,selcol=None,tacol=None,argcol={}):
+        '''
+        Parameters
+        ----------
+        questpattern : regex pattern for a question. necessary.
+        qpattern : regex pattern for question text in a question. necessary.
+        selpattern : regex pattern for selections.
+                     a question can have several matching selections.
+        tapattern : regex pattern for true answer.
+        argpattern : dict with {'arg_name' : 'arg_regex'} sets.
+        '''
         super(QuestFormExcelLoader,self).__init__(None,qcol,selcol,tacol,argcol)
 
     def _load(self,questdf):
@@ -114,7 +154,35 @@ class QuestFormExcelLoader(QuestFormTextLoader):
 
 
 class BeginQuestForm():
-    def __init__(self,qf,arrange='qast',storage='l|w',no_score=False,input_manner=None,no_filter=False):
+    '''Class for rendering the exam.'''
+
+    def __init__(self, qf, arrange='qast', no_score=False, input_manner=None,
+            no_filter=False, storage='l|w', filenames=['Curdata.data','Wrongdata.data']):
+        '''
+        Parameters
+        ----------
+        qf : QuestForm. The QuestForm that test on.
+        storage : str with several units separated by `|`.
+                each unit contains one or more of `twol`.
+                `t` indicates Quests that marked as true.
+                `w` indicates Quests that marked as false.
+                `o` indicates Quests that marked as others.
+                `l` indicates Quests that isn't marked.
+        filenames : list with each element indicates the filename of
+                the output of `storage` option.
+        arrange : iterable. each element should be one argument in a `Quest` object.
+                `question` indicates the question text.
+                `answer` indicates the answer text.
+                `selections` indicates the question text.
+                `trueanswer` indicates the trueanswer text.
+                `label` may indicate the `lable` keyword in `args` child in `Quest`.
+                If not ambiguous, you can use `q` or `que` to indicate `question`,
+                or `a` to indicate `answer`.
+        no_filter : determines whether to record the True/False/others score.
+        input_manner : a class with a .get() method returns input text.
+                    designed for `InteractiveAnswer` class.
+        no_filter : determines whether to filter the qf by `self.sel_chap`.
+        '''
         self.qf = qf
         self.starttime = datetime.now()
         self.correct = []
@@ -122,15 +190,21 @@ class BeginQuestForm():
         self.other = []
         self.arrange = arrange
         self.storage = storage
+        self.store_filenames = filenames
         self.no_score = no_score
         self.input_manner = input_manner
         self.status = []
         self.no_filter = no_filter
 
     def selchap(self,qf):
+        '''
+        Dummy function to select chapters (or filtering the QuestForm).
+        Override this funtion to make it work.
+        '''
         return qf
 
     def oninit(self):
+        '''Things done on initialize'''
         if InteractiveAnswer('Randomize?',yes_or_no=True).get():
             random.shuffle(self.arranged_index)
         print('\n','='*BOARDER_LENGTH,'\n')
@@ -140,6 +214,7 @@ class BeginQuestForm():
         print('\n','='*BOARDER_LENGTH,'\n')
 
     def _report(self):
+        ''' Report prints.'''
         print('\n\n','='*BOARDER_LENGTH,'\n')
         usedtime = (datetime.now()-self.starttime).seconds
         (usedtime, s) = divmod(usedtime, 60)
@@ -159,53 +234,23 @@ class BeginQuestForm():
 
 
     def onkill(self):
+        ''' Things done on kill/interrupt.'''
         print('\n\n','='*BOARDER_LENGTH,'\n')
         print(space_fill('Interrupted',BOARDER_LENGTH))
         self._report()
-        self.store_data(level=self.storage)
+        self.store_data(level=self.storage, filenames=self.store_filenames)
         return
 
     def onfinish(self):
+        ''' Things done on finishing exam.'''
         print('\n\n','='*BOARDER_LENGTH,'\n')
         print(space_fill('Finished',BOARDER_LENGTH))
         self._report()
-        self.store_data(level=self.storage)
+        self.store_data(level=self.storage, filenames=self.store_filenames)
         return
 
-    #def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='l|w'):
-    #    l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong) | _in_list(i,self.other))]
-
-    #    togoindex = []
-    #    for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
-    #        if i in level.split('|')[0]: togoindex += j
-    #    togoindex.sort()
-    #    qf = self.qf[togoindex]
-    #    if len(qf) != 0:
-    #        with open(togo,'wb') as f:
-    #            pickle.dump(qf,f)
-    #    else:
-    #        try: os.remove(togo)
-    #        except: pass
-
-    #    if len(level.split('|')) > 1:
-    #        toreviseindex = []
-    #        for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
-    #            if i in level.split('|')[1]: toreviseindex += j
-    #        toreviseindex.sort()
-    #        qf = self.qf[toreviseindex]
-    #        if len(qf) != 0:
-    #            if torevise not in os.listdir():
-    #                with open(torevise,'wb') as f:
-    #                    pickle.dump(qf,f)
-    #            else:
-    #                with open(torevise,'rb') as f:
-    #                    wrongdata = pickle.load(f)
-    #                wrongdata = QuestForm(wrongdata + qf)
-    #                with open(torevise,'wb') as f:
-    #                    pickle.dump(wrongdata,f)
-    #    return
-
     def store_data(self,filenames=['Curdata.data','Wrongdata.data'],level='l|w'):
+        ''' Stores data.'''
         # get left quests
         l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong) | _in_list(i,self.other))]
 
@@ -237,6 +282,7 @@ class BeginQuestForm():
                 except: pass
 
     def raise_quest(self,quest,**kwargs):
+        '''Loop to raise a `Quest` according to `self.arrange`.'''
         ans = None
         for a in self.arrange:
             if re.findall('^'+a,'quest'):
@@ -259,7 +305,8 @@ class BeginQuestForm():
         return ans
 
     def get_input(self,input_manner=None):
-        if not input_manner:
+        '''Get user input if input_manner is not given.'''
+        if input_manner is None:
             return input('Your Answer: ')
         else:
             try: return input_manner.get()
@@ -267,6 +314,7 @@ class BeginQuestForm():
                 raise TypeError('`input_manner` should have a `get()` method')
 
     def start(self):
+        '''Starting point.'''
         try:
             if not self.no_filter: self.qf = self.selchap(self.qf)
             self.length = len(self.qf)
@@ -287,18 +335,25 @@ class BeginQuestForm():
         except (KeyboardInterrupt, EOFError): self.onkill()
 
     def raise_q(self,quest,**kwargs):
+        '''Raises question in a `Quest`. You may want to overwrite it'''
         print('Question %d/%d: '%(len(self.other)+len(self.correct)+
                 len(self.wrong)+1,self.length),end='')
         print('\n'.join(quest.q))
         return
 
     def raise_sel(self,quest,**kwargs):
+        '''Raises selections in a `Quest`. You may want to overwrite it'''
         if quest.sel: print('\n'.join(quest.sel))
 
     def raise_ta(self,quest,**kwargs):
+        '''Raises true answer in a `Quest`. You may want to overwrite it'''
         if quest.ta: print('True Answer:',' '.join(quest.ta))
 
     def check_ans(self,ans,quest,**kwargs):
+        '''
+        Check answer. returns True or False or other to your convenience.
+        You may want to overwrite it.
+        '''
         if self.no_score: return True
         if ans == ''.join(quest.ta):
             print(colorit('Correct!','green'))
@@ -308,6 +363,7 @@ class BeginQuestForm():
             return False
 
     def show_status(self,hduration):
+        ''' Show statistics before exit.  '''
         result = []
         tempres = [0,0,0]
         status = self.status
