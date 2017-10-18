@@ -18,29 +18,29 @@ class QuestFormTextLoaderRevise(QuestFormTextLoader):
             with open(filelist[no]) as f: queststr = f.read()
         else:
             queststr = ''
-            for i in no: 
+            for i in no:
                 with open(filelist[i]) as f: queststr += f.read() + '\n\n'
 
         return self._load(queststr)
 
 
 class BeginQuestFormEngMain(BeginQuestForm):
-    def check_ans(self,ans,quest):
+    def check_ans(self,ans,quest,**kwargs):
         return ans
 
-    def raise_q(self,quest):
+    def raise_q(self,quest,**kwargs):
         super(BeginQuestFormEngMain,self).raise_q(quest)
         input('Your Answer: ')
         return
 
-    def raise_sel(self,quest):
+    def raise_sel(self,quest,**kwargs):
         if quest.sel: print('True Answer:',*quest.sel,sep='\n')
 
 #def main():
 #    qf = QuestFormTextLoaderRevise(questpattern='\d+\.[\s\S]+?(?<=\n\n)',qpattern='(?=\d+\.).*',
 #            tapattern='\n(?! *\d).*').load()
 #    BeginQuestForm(qf,no_score=True).start()
-    
+
 
 def main():
     reverse=InteractiveAnswer('Eng -> Chinese?',yes_or_no=True).get()

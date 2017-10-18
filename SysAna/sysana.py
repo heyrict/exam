@@ -55,18 +55,18 @@ class BeginQuestFormSysAna(BeginQuestForm):
         outqf = QuestForm([i for i in qf if _in_list(i.args['Difficulty'],kind)])
         return outqf
 
-    def raise_sel(self,quest):
-        if quest.sel: 
+    def raise_sel(self,quest,**kwargs):
+        if quest.sel:
             for s,t in zip(quest.sel,'ABCDE'):
                 print(t+'.',s)
 
-    def raise_q(self,quest):
+    def raise_q(self,quest,**kwargs):
         print('Question %d/%d: '%(len(self.other)+len(self.correct)+len(self.wrong)+1,self.length),end='')
         print('\n'.join(quest.q),'' if len(quest.ta[0])==1 else '[多选]')
         return
 
-    def check_ans(self,ans,quest):
-        if ans == 'pass': 
+    def check_ans(self,ans,quest,**kwargs):
+        if ans == 'pass':
             print(colorit('Roger!','magenta'))
             return 'pass'
         if set(list(split_wrd(ans.upper(),list(', ，、'),''))) == set(list(''.join(quest.ta))):

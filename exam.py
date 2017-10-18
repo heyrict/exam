@@ -11,6 +11,10 @@ class Quest():
         self.ta = ta
         self.args = args
 
+    def __str__(self):
+        return '{\n\tq: %s,\n\tsel: %s,\n\tta: %s,\n\targs: %s\n}' % \
+            (self.q, self.sel, self.ta, self.args)
+
     def __eq__(self,value):
         if type(value) != type(self): return False
         for i in ['q','sel','ta','args']:
@@ -56,7 +60,7 @@ class QuestFormTextLoader():
             if InteractiveAnswer('Cached data found.Continue?',yes_or_no=True).get():
                 with open(togo,'rb') as f: return pickle.load(f)
         return
-                
+
     def _load(self,queststr):
         questform = QuestForm()
         for quest in re.findall(self.questpattern,queststr):
@@ -70,7 +74,7 @@ class QuestFormTextLoader():
 
     def load(self,queststr):
         qf = self.get_cached_qf()
-        if type(qf) != type(None): 
+        if type(qf) != type(None):
             self.is_cached = True
             return qf
 
@@ -98,9 +102,12 @@ class QuestFormExcelLoader(QuestFormTextLoader):
             taitem = quest[self.tapattern] if self.tapattern else None
             argitem = {pat:quest[self.argpattern[pat]] for pat in self.argpattern} if self.argpattern else {}
 
-            qitem = [qitem] if type(qitem)==str else list(qitem)
-            selitem = [selitem] if type(selitem)==str else list(selitem)
-            taitem = [taitem] if type(taitem)==str  else list(taitem)
+            qitem = None if qitem is None else (
+                    [qitem] if isinstance(qitem, str) else list(qitem))
+            selitem = None if selitem is None else (
+                    [selitem] if isinstance(selitem, str) else list(selitem))
+            taitem = None if taitem is None else (
+                    [taitem] if isinstance(taitem, str) else list(taitem))
 
             questform = questform.append(Quest(q=qitem,sel=selitem,ta=taitem,args=argitem))
         return questform
@@ -165,54 +172,85 @@ class BeginQuestForm():
         self.store_data(level=self.storage)
         return
 
-    def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='l|w'):
+    #def store_data(self,togo='Curdata.data',torevise='Wrongdata.data',level='l|w'):
+    #    l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong) | _in_list(i,self.other))]
+
+    #    togoindex = []
+    #    for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
+    #        if i in level.split('|')[0]: togoindex += j
+    #    togoindex.sort()
+    #    qf = self.qf[togoindex]
+    #    if len(qf) != 0:
+    #        with open(togo,'wb') as f:
+    #            pickle.dump(qf,f)
+    #    else:
+    #        try: os.remove(togo)
+    #        except: pass
+
+    #    if len(level.split('|')) > 1:
+    #        toreviseindex = []
+    #        for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
+    #            if i in level.split('|')[1]: toreviseindex += j
+    #        toreviseindex.sort()
+    #        qf = self.qf[toreviseindex]
+    #        if len(qf) != 0:
+    #            if torevise not in os.listdir():
+    #                with open(torevise,'wb') as f:
+    #                    pickle.dump(qf,f)
+    #            else:
+    #                with open(torevise,'rb') as f:
+    #                    wrongdata = pickle.load(f)
+    #                wrongdata = QuestForm(wrongdata + qf)
+    #                with open(torevise,'wb') as f:
+    #                    pickle.dump(wrongdata,f)
+    #    return
+
+    def store_data(self,filenames=['Curdata.data','Wrongdata.data'],level='l|w'):
+        # get left quests
         l = [i for i in range(len(self.qf)) if not (_in_list(i,self.correct) | _in_list(i,self.wrong) | _in_list(i,self.other))]
 
-        togoindex = []
-        for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
-            if i in level.split('|')[0]: togoindex += j
-        togoindex.sort()
-        qf = self.qf[togoindex]
-        if len(qf) != 0:
-            with open(togo,'wb') as f:
-                pickle.dump(qf,f)
-        else:
-            try: os.remove(togo)
-            except: pass
-        
-        if len(level.split('|')) > 1:
-            toreviseindex = []
+        _level = level.split('|')
+        for fn, lv in zip(filenames, range(len(_level))):
+            index = []
+            # add required quests to index
             for i,j in zip('cwol',[self.correct,self.wrong,self.other,l]):
-                if i in level.split('|')[1]: toreviseindex += j
-            toreviseindex.sort()
-            qf = self.qf[toreviseindex]
+                if i in _level[lv]: index += j
+            index.sort()
+            qf = self.qf[index]
             if len(qf) != 0:
-                if torevise not in os.listdir():
-                    with open(torevise,'wb') as f:
+                # TODO: duplicated. add append/write method as an option
+                if lv == 0:
+                    with open(fn,'wb') as f:
                         pickle.dump(qf,f)
                 else:
-                    with open(torevise,'rb') as f:
-                        wrongdata = pickle.load(f)
-                    wrongdata = QuestForm(wrongdata + qf)
-                    with open(torevise,'wb') as f:
-                        pickle.dump(wrongdata,f)
-        return
+                    if fn not in os.listdir():
+                        with open(fn,'wb') as f:
+                            pickle.dump(qf,f)
+                    else:
+                        with open(fn,'rb') as f:
+                            data = pickle.load(f)
+                        data = QuestForm(data + qf)
+                        with open(fn,'wb') as f:
+                            pickle.dump(data,f)
+            else:
+                try: os.remove(fn)
+                except: pass
 
-    def raise_quest(self,quest):
+    def raise_quest(self,quest,**kwargs):
         ans = None
         for a in self.arrange:
             if re.findall('^'+a,'quest'):
-                self.raise_q(quest)
+                self.raise_q(quest, **kwargs)
             elif re.findall('^'+a,'args'):
                 if not quest.args: continue
                 for k in quest.args:
                     print(k+':',quest.args[k])
             elif re.findall('^'+a,'selection'):
-                self.raise_sel(quest)
+                self.raise_sel(quest, **kwargs)
             elif re.findall('^'+a,'true_answer'):
                 ans = self.get_input(self.input_manner)
-                ans = self.check_ans(ans,quest)
-                if ans is not True or self.no_score: self.raise_ta(quest)
+                ans = self.check_ans(ans, quest, **kwargs)
+                if ans is not True or self.no_score: self.raise_ta(quest, **kwargs)
             else:
                 for k in quest.args:
                     if re.findall('^'+a, k):
@@ -227,7 +265,7 @@ class BeginQuestForm():
             try: return input_manner.get()
             except AttributeError:
                 raise TypeError('`input_manner` should have a `get()` method')
-        
+
     def start(self):
         try:
             if not self.no_filter: self.qf = self.selchap(self.qf)
@@ -235,7 +273,7 @@ class BeginQuestForm():
             self.arranged_index = list(range(self.length))
             self.oninit()
             for quest in self.arranged_index:
-                tof = self.raise_quest(self.qf[quest])
+                tof = self.raise_quest(self.qf[quest], qid=quest)
                 if tof is True:
                     self.correct.append(quest)
                     self.status.append(((datetime.now()-self.starttime).seconds, 1))
@@ -248,19 +286,19 @@ class BeginQuestForm():
             self.onfinish()
         except (KeyboardInterrupt, EOFError): self.onkill()
 
-    def raise_q(self,quest):
+    def raise_q(self,quest,**kwargs):
         print('Question %d/%d: '%(len(self.other)+len(self.correct)+
                 len(self.wrong)+1,self.length),end='')
         print('\n'.join(quest.q))
         return
 
-    def raise_sel(self,quest):
+    def raise_sel(self,quest,**kwargs):
         if quest.sel: print('\n'.join(quest.sel))
 
-    def raise_ta(self,quest):
+    def raise_ta(self,quest,**kwargs):
         if quest.ta: print('True Answer:',' '.join(quest.ta))
 
-    def check_ans(self,ans,quest):
+    def check_ans(self,ans,quest,**kwargs):
         if self.no_score: return True
         if ans == ''.join(quest.ta):
             print(colorit('Correct!','green'))

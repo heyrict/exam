@@ -1,0 +1,1 @@
+/home/ericx/Eric/benkyo/SysAna_NC.md

@@ -102,3 +102,7 @@ ENV/
 
 # cache files
 *.data
+*.data.bak
+
+# specific cache files
+Physiology/NewData.xlsx
