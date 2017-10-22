@@ -56,12 +56,14 @@ class BeginPhysioQuestForm(BeginQuestForm):
         return
 
     def check_ans(self, ans, quest, **kwargs):
+        if quest.ta is None:
+            self.qf[kwargs['qid']].ta = ans
+            return False
+
+        print('True Answer:', ''.join(quest.ta))
         if ans == 'pass':
             print(colorit('Roger!', 'magenta'))
             return 'pass'
-        elif quest.ta is None:
-            self.qf[kwargs['qid']].ta = ans
-            return False
         elif set(list(split_wrd(ans.upper(), list(', ，、'), ''))) == set(
                 list(''.join(quest.ta))):
             print(colorit('Same!', 'green'))
@@ -84,6 +86,7 @@ def main():
         argcol={'Chapter': '章节'})
     BeginPhysioQuestForm(
         t.load('Data.xlsx'),
+        input_manner=InteractiveAnswer("Your Answer:"),
         no_filter=t.is_cached,
         storage='l|wo').start()
 
