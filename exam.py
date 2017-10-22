@@ -172,7 +172,7 @@ class BeginQuestForm():
                 the output of `storage` option.
         arrange : iterable. each element should be one argument in a `Quest` object.
                 `question` indicates the question text.
-                `answer` indicates the answer text.
+                `args` indicates all args.
                 `selections` indicates the question text.
                 `trueanswer` indicates the trueanswer text.
                 `label` may indicate the `lable` keyword in `args` child in `Quest`.
@@ -262,24 +262,24 @@ class BeginQuestForm():
                 if i in _level[lv]: index += j
             index.sort()
             qf = self.qf[index]
-            if len(qf) != 0:
-                # TODO: duplicated. add append/write method as an option
-                if lv == 0:
+            # TODO: duplicated. add append/write method as an option
+            if fn='Curdata.data':
+                if len(qf) != 0:
                     with open(fn,'wb') as f:
                         pickle.dump(qf,f)
                 else:
-                    if fn not in os.listdir():
-                        with open(fn,'wb') as f:
-                            pickle.dump(qf,f)
-                    else:
-                        with open(fn,'rb') as f:
-                            data = pickle.load(f)
-                        data = QuestForm(data + qf)
-                        with open(fn,'wb') as f:
-                            pickle.dump(data,f)
+                    try: os.remove(fn)
+                    except: pass
             else:
-                try: os.remove(fn)
-                except: pass
+                if fn not in os.listdir():
+                    with open(fn,'wb') as f:
+                        pickle.dump(qf,f)
+                else:
+                    with open(fn,'rb') as f:
+                        data = pickle.load(f)
+                    data = QuestForm(data + qf)
+                    with open(fn,'wb') as f:
+                        pickle.dump(data,f)
 
     def raise_quest(self,quest,**kwargs):
         '''Loop to raise a `Quest` according to `self.arrange`.'''
