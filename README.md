@@ -27,6 +27,8 @@ exam
 ├── SysAna                       A sample for revising Systemetical Analogy.
 │   ├── Data.xlsx                Some of the questions are in English.
 │   └── sysana.py
+├── BioChem                      A sample for revising Biochemistry.
+│   └── main.py                  Not all question have answer.
 ├── Physiology                   A sample for revising Physiology.
 │   ├── Data.xlsx                Not all question have answer.
 │   └── main.py
