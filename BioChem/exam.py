@@ -86,7 +86,18 @@ class QuestFormTextLoader():
         if togo in os.listdir():
             if InteractiveAnswer('Cached data found.Continue?',yes_or_no=True).get():
                 with open(togo,'rb') as f: return pickle.load(f)
-        return
+        else:
+            datas = ["Create a new data"] + [i for i in os.listdir() if re.findall(r'.*\.data$',i)]
+            if not datas: return
+            print("Cached data not found, listing other datas")
+            for i in range(len(datas)):
+                print('\t%3s: \t%s' % (i, datas[i]))
+            no = InteractiveAnswer('Which one to choose?',verify=range(len(datas)),
+                    serializer=lambda x: [int(i) for i in re.findall(r'[0-9]+', x)]).get()[0]
+            if no == 0:
+                return
+            else:
+                with open(datas[no],'rb') as f: return pickle.load(f)
 
     def _load(self,queststr):
         questform = QuestForm()
@@ -263,7 +274,7 @@ class BeginQuestForm():
             index.sort()
             qf = self.qf[index]
             # TODO: duplicated. add append/write method as an option
-            if fn='Curdata.data':
+            if fn=='Curdata.data':
                 if len(qf) != 0:
                     with open(fn,'wb') as f:
                         pickle.dump(qf,f)

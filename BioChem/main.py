@@ -59,8 +59,11 @@ class BeginBioChemQuestForm(BeginQuestForm):
         if ans == 'pass':
             print(colorit('Roger!', 'magenta'))
             return 'pass'
+        elif ans == 'drop':
+            print(colorit('Roger!', 'magenta'))
+            return True
         elif set(list(split_wrd(ans.upper(), list(', ，、'), ''))) == set(
-                list(''.join(quest.ta))):
+                list(''.join(quest.ta).upper())):
             print(colorit('Same!', 'green'))
             return True
         else:
