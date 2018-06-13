@@ -3,6 +3,7 @@
 
 import sys
 
+import numpy as np
 import pandas as pd
 
 from data_processing import _in_list, colorit, split_wrd, unsqueeze_numlist
@@ -56,7 +57,8 @@ class BeginPhysioQuestForm(BeginQuestForm):
         return
 
     def check_ans(self, ans, quest, **kwargs):
-        if quest.ta is None:
+        if not isinstance(quest.ta, list) or (isinstance(quest.ta[0], float)
+                                              and np.isnan(quest.ta[0])):
             self.qf[kwargs['qid']].ta = ans
             return False
 
