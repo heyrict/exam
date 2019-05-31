@@ -1,1 +1,0 @@
-/home/ericx/Eric/benkyo/组织胚胎学问答题.md

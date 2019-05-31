@@ -1,1 +1,0 @@
-/home/ericx/Eric/benkyo/Hist_Embr/Text-like-Question.txt

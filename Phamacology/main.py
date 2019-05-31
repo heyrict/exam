@@ -6,7 +6,7 @@ from exam import *
 sys.path.insert(0, '..')
 
 
-class QuestFormTextLoaderRevise(QuestFormTextLoader):
+class QuestFormTextLoaderElearning(QuestFormTextLoader):
     def load(self):
         qf = self.get_cached_qf()
         if type(qf) != type(None): return qf
@@ -37,8 +37,9 @@ class QuestFormTextLoaderRevise(QuestFormTextLoader):
     def _load(self, queststr, filename=None):
         questform = QuestForm()
         for quest in re.findall(self.questpattern, queststr):
-            qitem = [quest[1:].rstrip()]
-            selitem = None
+            qitem = re.findall(self.qpattern, quest)
+            selitem = re.findall(self.selpattern,
+                                 quest) if self.selpattern else None
             taitem = re.findall(self.tapattern,
                                 quest) if self.tapattern else None
             argitem = [(patnam, re.findall(self.argpattern[patnam], quest)) \
@@ -80,14 +81,16 @@ class BeginMicroBiologyQuestForm(BeginQuestForm):
 
 
 def main():
-    qf = QuestFormTextLoaderRevise(
-        questpattern=r'[ABCDE]+\d+\.[\s\S]+?(?<=\n\n)',
+    qf = QuestFormTextLoaderElearning(
+        questpattern=r'\[[ABCDE]\]+\d+\.[\s\S]+?\n(?=\n)',
         qpattern=r'(?=\d+\.).*',
-        tapattern=r'^\s*[ABCDE]+').load()
+        selpattern=r'[ABCDE]\.[\s\S]+?(?=\n)',
+        tapattern=r'(?<=\[)[ABCDE]+(?=\])').load()
     BeginMicroBiologyQuestForm(
-        qf, input_manner=InteractiveAnswer("Your Answer:"),
+        qf,
+        input_manner=InteractiveAnswer("Your Answer:"),
         arrange="qst",
-        storage='l|wo').start()
+        storage='l|w').start()
 
 
 if __name__ == '__main__':
